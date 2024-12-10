@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualisasi Pancaran Gelombang Radiasi Bumi</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #000; /* Latar belakang hitam */
+        margin: 0;
+        padding: 20px;
+        overflow: hidden; /* Menghilangkan scrollbar */
+      }
+      h1 {
+        text-align: center;
+        color: white;
+      }
+      canvas {
+        display: block;
+        margin: auto;
+        background-color: transparent; /* Mengatur latar belakang canvas menjadi transparan */
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Visualisasi Pancaran Gelombang Radiasi Bumi</h1>
+    <canvas id="waveCanvas" width="850" height="500"></canvas>
+
+    <script>
+      const waveCanvas = document.getElementById("waveCanvas");
+      const waveCtx = waveCanvas.getContext("2d");
+      const centerX = waveCanvas.width / 2; // Titik tengah X
+      const centerY = waveCanvas.height / 2; // Titik tengah Y
+      const earthBaseRadius = 50; // Radius dasar Bumi
+      const waveCount = 10; // Jumlah gelombang
+      const waveSpeed = 17; // Kecepatan gelombang
+      let time = 0; // Variabel waktu untuk animasi
+      const stars = []; // Array untuk menyimpan posisi bintang
+      const moonRadius = 15; // Radius Bulan
+      const moonDistance = 200; // Jarak Bulan dari Bumi
+
+      // Variabel untuk posisi dan kecepatan Bulan
+      let moonX = centerX + moonDistance; // Posisi X Bulan
+      let moonY = centerY; // Posisi Y Bulan
+      let moonVelocityX = 0; // Kecepatan X Bulan
+      let moonVelocityY = 0; // Kecepatan Y Bulan
+      const gravity = 0.1; // Gaya gravitasi yang mempengaruhi Bulan
+
+      // Konstanta untuk rumus Planck
+      const h = 6.626e-34; // Konstanta Planck
+      const c = 3e8; // Kecepatan cahaya
+      const k = 1.381e-23; // Konstanta Boltzmann
+      const temperature = 300; // Suhu Bumi dalam Kelvin
+
+      // Membuat bintang-bintang
+      function createStars(numStars) {
+        for (let i = 0; i < numStars; i++) {
+          stars.push({
+            x: Math.random() * waveCanvas.width,
+            y: Math.random() * waveCanvas.height,
+            size: Math.random() * 2 + 1, // Ukuran bintang
+          });
+        }
+      }
+
+      function drawStars() {
+        waveCtx.fillStyle = "white"; // Warna bintang
+        stars.forEach((star) => {
+          waveCtx.beginPath();
+          waveCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          waveCtx.fill();
+        });
+      }
+
+      function drawEarth() {
+        const earthRadius = earthBaseRadius; // Radius Bumi yang tetap
+
+        // Gambar Bumi
+        waveCtx.beginPath();
+        waveCtx.arc(centerX, centerY, earthRadius, 0, Math.PI * 2);
+        waveCtx.fillStyle = "#4CAF50"; // Warna Bumi
+        waveCtx.fill();
+        waveCtx.strokeStyle = "#388E3C"; // Garis tepi Bumi
+        waveCtx.stroke();
+      }
+
+      function drawMoon() {
+        // Menghitung posisi Bulan
+        const moonX = centerX + moonDistance * Math.cos(time * 0.5); // Posisi X Bulan
+        const moonY = centerY + moonDistance * Math.sin(time * 0.5); // Posisi Y Bulan
+
+        // Gambar Bulan
+        waveCtx.beginPath();
+        waveCtx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+        waveCtx.fillStyle = "#FFD700"; // Warna Bulan
+        waveCtx.fill();
+        waveCtx.strokeStyle = "#FFA500"; // Garis tepi Bulan
+        waveCtx.stroke();
+      }
+
+      function updateMoonPosition() {
+        // Menghitung gaya gravitasi yang mempengaruhi Bulan
+        const dx = centerX - moonX; // Selisih posisi X
+        const dy = centerY - moonY; // Selisih posisi Y
+        const distance = Math.sqrt(dx * dx + dy * dy); // Jarak antara Bumi dan Bulan
+
+        // Menghitung percepatan Bulan akibat gravitasi
+        const force = gravity / (distance * distance); // Gaya gravitasi terbalik proporsional dengan jarak kuadrat
+        moonVelocityX += force * (dx / distance); // Memperbarui kecepatan X
+        moonVelocityY += force * (dy / distance); // Memperbarui kecepatan Y
+
+        // Memperbarui posisi Bulan menggunakan metode Euler
+        moonX += moonVelocityX; // Memperbarui posisi X
+        moonY += moonVelocityY; // Memperbarui posisi Y
+      }
+
+      function drawRadiationWaves() {
+        // Gambar gelombang radiasi yang keluar dari Bumi
+        for (let i = 0; i < waveCount; i++) {
+          waveCtx.beginPath();
+          const radius = earthBaseRadius + time * waveSpeed + i * 20; // Radius gelombang yang meningkat seiring waktu
+          waveCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          waveCtx.strokeStyle = `rgba(75, 192, 192, ${1 - i / waveCount})`; // Warna gelombang
+          waveCtx.lineWidth = 2;
+          waveCtx.stroke();
+
+          // Mengatur transparansi berdasarkan waktu dan indeks gelombang
+          const alpha = Math.max(0, 1 - (time - i * 10) / 100); // Mengurangi transparansi seiring wakt
+          waveCtx.strokeStyle = `rgba(75, 192, 192, ${1 - i / waveCount})`; // Warna gelombang
+          waveCtx.lineWidth = 2;
+          waveCtx.stroke();
+        }
+
+        // Menambahkan gelombang baru secara terus menerus
+        if (time * waveSpeed > waveCount * 60) {
+          time = 0; // Reset waktu untuk membuat gelombang baru
+        }
+      }
+
+      function planckRadiation(wavelength) {
+        // Menghitung intensitas radiasi menggunakan rumus Planck
+        return (
+          (2 * Math.PI * h * c) /
+          (Math.pow(wavelength, 5) *
+            (Math.exp((h * c) / (wavelength * k * temperature)) - 1))
+        );
+      }
+
+      function drawPlanckWaves() {
+        const wavelengths = Array.from({ length: 100 }, (_, i) => 400 + i * 4); // Panjang gelombang dari 400nm ke 800nm
+        wavelengths.forEach((wavelength, index) => {
+          const intensity = planckRadiation(wavelength);
+          const radius = earthBaseRadius + time * waveSpeed + index * 10; // Radius gelombang berdasarkan intensitas
+          waveCtx.beginPath();
+          waveCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          waveCtx.strokeStyle = `rgba(255, 255, 0, ${intensity / 1e-10})`; // Warna gelombang berdasarkan intensitas
+          waveCtx.lineWidth = 2;
+          waveCtx.stroke();
+        });
+      }
+
+      function animate() {
+        waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height); // Menghapus canvas
+        drawStars(); // Gambar bintang
+        drawEarth(); // Gambar Bumi
+        updateMoonPosition(); // Memperbarui posisi Bulan
+        drawMoon(); // Gambar Bulan
+        drawRadiationWaves(); // Gambar gelombang radiasi
+        drawPlanckWaves(); // Gambar gelombang berdasarkan radiasi Planck
+        time += 0.05; // Meningkatkan waktu untuk animasi
+        requestAnimationFrame(animate); // Memanggil fungsi untuk animasi berikutnya
+      }
+
+      createStars(100); // Membuat 100 bintang
+      animate(); // Mulai animasi
+    </script>
+  </body>
+</html>
